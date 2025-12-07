@@ -1,6 +1,6 @@
 ---
 title: "TIL: JWT Attacks & Burp Sequencer"
-date: 2025-12-08
+date: 2025-12-06
 tags: [til, cybersecurity, pentesting, api, jwt, burp]
 ---
 
