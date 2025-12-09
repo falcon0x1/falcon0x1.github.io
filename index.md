@@ -1,54 +1,58 @@
----
-title: "Falcon0x1 — My Cybersecurity Journey"
----
+# falcon0x1.github.io
+# Hey, I'm Mahmoud — aka **falcon0x1**
 
-# Welcome to My Cybersecurity Learning Space
+Welcome to my corner of GitHub.  
+I break things (ethically), fix things, learn things, and document the whole journey.
 
-Hi, I'm Mahmoud Elshorbagy — better known online as **falcon0x1**.  
-If you're here, you're probably into hacking, breaking things (ethically), or just curious about how security actually works.  
-Good news: so am I.
+I'm currently deep-diving into cybersecurity with a focus on practical skills, real-world attack paths, and understanding how systems actually fail.
 
-This blog is where I document my daily progress, experiments, mistakes, breakthroughs, and everything I learn while leveling up in cybersecurity.
-
-## What I'm Currently Exploring
+## What I'm Working On Right Now
 
 ### Web Application Security & Pentesting
-I’m diving deep into how web apps break:
-- OWASP concepts  
-- Authentication flaws  
-- Token attacks (JWTs, cookies, API keys)  
-- Real-world exploitation workflows  
+Exploring how web apps break:
+- Authentication & session issues  
+- Token security (JWTs, cookies, API keys)  
+- OWASP Top 10 in real scenarios  
+- Practical exploitation techniques  
 
 ### Android Application Pentesting
-APK time.
-- Reversing and static analysis  
-- Dynamic testing  
-- Mobile API attacks  
-- Discovering how apps *really* behave  
+Mobile apps are fun because they hide everything…  
+until you decompile them.
+- Static & dynamic analysis  
+- API inspection & manipulation  
+- Identifying insecure implementations  
 
 ### Active Directory (AD) Security
-Because every internal network eventually leads to AD:
+Every corporate network eventually leads here.
 - Kerberoasting  
 - LDAP enumeration  
-- Privilege escalation paths  
-- Understanding how attackers move inside networks  
+- Privilege escalation  
+- Attack paths & defenses  
 
-### General Cybersecurity
-Basically anything that helps me get better:
-- Tools, automation, workflows  
-- Write-ups  
-- Hands-on labs  
-- Notes from courses, mistakes, and experiments  
+### General Cybersecurity Practice
+Pretty much anything that sharpens my skills:
+- Burp Suite workflows  
+- Tooling & automation  
+- Labs, experiments, write-ups  
+- Learning something new every day  
 
-My goal is simple: learn something new every day and document it here.
+## My Daily Notes (TIL)
+I write short, honest notes about what I learn each day.  
+No fluff — just real progress.
 
-## Today I Learned (TIL)
-Want to see my daily progress?
+👉 https://falcon0x1.github.io/til/
 
-➡️ **[Browse all TIL entries](til/)**  
-Short notes. Real learning. Zero fluff.
+## Current Projects
+### **FalconRecon**
+A personal project focused on API reconnaissance and security automation.  
+More features and documentation coming soon.
 
----
+## About Me
+- Based in Egypt  
+- Passionate about cybersecurity and offensive security  
+- Love creating tools, breaking systems, and understanding the “why” behind every vulnerability  
 
-Thanks for stopping by.  
-If you're also studying cybersecurity, feel free to follow along — you might find something useful, or at least enjoy the journey.
+## Want to Connect?
+Feel free to reach out for collaboration, study sessions, or just to talk security.
+
+Thanks for stopping by — and welcome to the journey.
