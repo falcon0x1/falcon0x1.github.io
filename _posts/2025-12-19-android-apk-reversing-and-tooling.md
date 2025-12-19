@@ -1,6 +1,6 @@
 ---
 title: "Android Pentesting Notes – APK Reversing & Tooling"
-date: 2025-01-31 10:00:00 +0200
+date: 2025-12-19 10:00:00 +0200
 categories: [Android, Mobile Security]
 tags: [apktool, jadx, reversing, android, pentesting]
 toc: true

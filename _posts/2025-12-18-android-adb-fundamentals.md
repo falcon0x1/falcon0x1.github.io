@@ -1,6 +1,6 @@
 ---
 title: "Android Pentesting Notes – ADB Fundamentals"
-date: 2025-01-30 16:01:07 +0200
+date: 2025-12-18 16:01:07 +0200
 categories: [Android, Mobile Security]
 tags: [adb, android, pentesting, hextree, mobile]
 toc: true
