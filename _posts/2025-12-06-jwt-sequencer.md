@@ -1,7 +1,7 @@
 
 ---
 title: "JWT Attacks & Token Entropy Analysis with Burp Sequencer"
-date: 2024-12-06 10:00:00 +0200
+date: 2025-12-06 10:00:00 +0200
 categories: [API, Authentication]
 tags: [jwt, burp, pentesting, api-security]
 toc: true
