@@ -45,6 +45,7 @@ social:
     # - https://www.facebook.com/username
     # - https://www.linkedin.com/in/username
 
+favicon: /assets/img/favicons/favicon.ico
 # Site Verification Settings
 webmaster_verifications:
   google: # fill in your Google verification code
