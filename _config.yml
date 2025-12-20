@@ -18,7 +18,7 @@ title: Falcon0x1 # the main title
 
 tagline: Security Writeups & Learning Notes # it will display as the subtitle
 
-favicon: /favicon.ico
+favicon: /assets/img/favicons/favicon.svg
 
 description: >- # used by seo meta and the atom feed
   A minimal, responsive and feature-rich Jekyll theme for technical writing.
