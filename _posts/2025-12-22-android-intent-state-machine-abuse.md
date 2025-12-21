@@ -103,9 +103,10 @@ adb shell am start -n io.hextree.attacksurface/.activities.Flag4Activity
 
 ---
 
-## Image
 
-![State machine diagram (INIT → PREPARE → BUILD → GET_FLAG)] (/assets/img/intent-state-machine.png)
+## Visual Mental Model
+
+![Intent-driven state machine diagram](/assets/img/intent-state-machine.png)
 
 ```
 ┌─────────┐
