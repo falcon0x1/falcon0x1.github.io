@@ -4,97 +4,127 @@ date: 2025-12-20 10:00:00 +0200
 categories: [Android, Mobile Security]
 tags: [android, jadx, reversing, api-security, pentesting]
 toc: true
----------
+---
 
 ## TL;DR
 
-* Obfuscation does not protect client-side secrets
-* URLs and API keys are often discoverable via global search
-* Focus on *what you are looking for*, not full code comprehension
+- Obfuscation **does not protect client-side secrets**
+- Backend URLs and API keys are often recoverable
+- In mobile pentesting, **speed and focus matter more than full code understanding**
 
 ---
 
-## Context
+## Why This Note Exists
 
-This note documents my first practical reverse-engineering exercise on **real Android weather applications**, focusing on extracting backend details rather than understanding the full codebase.
+This write-up documents my **first hands-on Android reverse-engineering exercise** using real-world **weather applications**.
 
-The primary goal was to answer:
+The objective was **not** to understand the entire app logic, but to answer a few high-impact security questions:
 
-* What API does the app talk to?
-* How does it authenticate?
-* Why is functionality disabled?
+- What backend API does the app communicate with?
+- How does the app authenticate?
+- Why are some features disabled?
 
----
-
-## Lab Setup
-
-* Emulator / physical device
-* `adb` for installation
-* `jadx-gui` for decompilation and search
-
-APKs analyzed:
-
-* `biz.binarysolutions.weatherusa.apk`
-* `io.hextree.weatherusa.apk`
+This reflects how Android apps are assessed during **real penetration tests**.
 
 ---
 
-## Strategy: Focus on the Goal
+## Lab Environment
 
-The application is obfuscated — **and that does not matter**.
+- Android Emulator / Physical Device  
+- `adb` for installation and inspection  
+- `jadx-gui` for decompilation and static analysis  
 
-Instead of reading classes:
+### Target APKs
 
-* Use **jadx Global Search**
-* Search for keywords:
-
-  * `http`
-  * `https`
-  * `api`
-  * `weather`
-  * `key`
-
-This approach mirrors real-world pentesting where time matters.
+- `biz.binarysolutions.weatherusa.apk`
+- `io.hextree.weatherusa.apk`
 
 ---
 
-## Findings
+## Pentesting Strategy: Think Like an Attacker
 
-### API Discovery
+These applications were **heavily obfuscated** — and that turned out to be irrelevant.
 
-* The backend endpoint is visible in decompiled code
-* Obfuscation does not hide string literals effectively
+Instead of reading classes line by line, I followed a **goal-oriented approach**:
 
-### Authentication Method
+- Ignore class names and package structure
+- Use **Global Search in jadx**
+- Search for meaningful strings such as:
+  - `http`
+  - `https`
+  - `api`
+  - `weather`
+  - `key`
 
-* API key stored inside **string resources**
-* Common real-world anti-pattern
-
-### Disabled Weather Updates
-
-* Feature disabled by **client-side logic checks**
-* Not enforced server-side
-
----
-
-## Manual API Testing
-
-Once the API details are known:
-
-* Rebuild the request manually
-* Use tools such as **Burp Suite** or `curl`
-* Include required headers and API key
+This mirrors real-world assessments where **time is limited** and results matter.
 
 ---
 
-## Image
+## API Discovery
 
-![adx global search result showing the weather API endpoint and API key] (/assets/img/jadx-global-search.png)
+
+::contentReference[oaicite:0]{index=0}
+
+
+Using jadx’s global search immediately revealed:
+
+- Clear-text backend URLs
+- Hardcoded API endpoints
+- API keys embedded in string resources
+
+Despite obfuscation, **string literals remained fully visible**, which is a common and critical weakness in Android apps.
+
+---
+
+## Authentication Mechanism
+
+Further inspection showed that:
+
+- Authentication relied on a **static API key**
+- The key was stored inside **`strings.xml`**
+- No dynamic token exchange or backend validation was observed
+
+This is a **classic mobile anti-pattern** and frequently exploitable.
+
+---
+
+## Disabled Features: Client-Side Trust
+
+Some weather functionality appeared “disabled” in the UI.
+
+Analysis revealed that:
+
+- The restriction was enforced **entirely client-side**
+- No server-side validation existed
+- Logic checks could be bypassed by:
+  - Repackaging
+  - Runtime manipulation
+  - Direct API calls
+
+This reinforces why **client-side checks should never enforce security**.
+
+---
+
+## Manual API Interaction
+
+Once the API details were extracted:
+
+- Requests were reconstructed manually
+- Testing was performed using:
+  - `curl`
+  - Burp Suite
+- Required headers and API keys were reused successfully
+
+At this point, the mobile app becomes **just another API client**.
 
 ---
 
 ## Key Takeaways
 
-* Obfuscation ≠ security
-* Secrets in Android apps are recoverable
-* Always search by *functionality*, not structure
+- Obfuscation ≠ security
+- Secrets inside Android apps are **recoverable**
+- Focus on **functionality**, not full decompilation
+- Mobile pentesting is about **finding leverage quickly**
+
+
+*Learning Android security starts with understanding how little the client can be trusted.*
