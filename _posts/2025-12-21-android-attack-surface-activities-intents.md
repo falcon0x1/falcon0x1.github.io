@@ -1,102 +1,81 @@
 ---
-title: "Android Pentesting Notes – Activities, Intents & Attack Surface"
-date: 2025-12-21 10:00:00 +0200
+title: "Android Attack Surface: Activities & Intents"
+date: 2025-12-21 21:00:00 +0200
 categories: [Android, Mobile Security]
-tags: [android, intents, activities, attack-surface, pentesting]
+tags: [android, pentesting, activities, intents, attack-surface]
 toc: true
----------
+---
 
 ## TL;DR
 
-* Every screen is backed by an Activity
-* Exported Activities are externally reachable
-* Intents are a primary Android attack surface
+- Every UI screen maps to an Activity  
+- Exported components expand the attack surface  
+- Intents are a primary entry point for untrusted input  
 
 ---
 
-## Context
+## Threat Model Context
 
-This note focuses on **Android application attack surface discovery**, specifically how Activities and Intents can be abused when exposed.
-
----
-
-## Android Activities
-
-An Activity represents a single screen.
-
-Key points:
-
-* Activities render UI
-* Activities are started via Intents
-* Activities may be **exported**
+From a penetration tester’s perspective, Android apps expose functionality through components.
+Misconfigured Activities combined with unvalidated Intents frequently lead to logic abuse,
+unauthorized access, or hidden functionality exposure.
 
 ---
 
-## AndroidManifest.xml
+## Activities as an Attack Surface
 
-The first file to inspect:
+Activities are user-facing entry points.
+
+Security impact:
+
+- Activities are launched via Intents
+- Exported Activities are externally reachable
+- Sensitive logic inside Activities becomes attacker-accessible
+
+### Manifest Red Flag
 
 ```xml
-<activity android:exported="true" />
-```
+<activity
+    android:name=".TargetActivity"
+    android:exported="true" />
+````
 
-Why this matters:
-
-* Exported Activities can be launched by:
-
-  * adb
-  * Other apps
-
----
-
-## Intents Explained
-
-Official definition:
-
-> "An intent is an abstract description of an operation to be performed."
-
-Practical definition:
-
-> Declare what you want to do and let Android handle routing.
+* Launchable via `adb`
+* Launchable by other apps
+* No permission boundary enforced
 
 ---
 
-## Starting Activities
-
-```java
-Intent intent = new Intent();
-intent.setClassName("pkg", "TargetActivity");
-startActivity(intent);
-```
-
-Incoming Intents:
+## Intents: Data Entry Vector
 
 ```java
 Intent intent = getIntent();
+String action = intent.getAction();
 ```
 
-This is where **external data enters the app**.
+* All Intent data is attacker-controlled
+* Actions, extras, and data URIs must be validated
+* Lifecycle assumptions are exploitable
 
 ---
 
-## Attack Surface Summary
+## Visualizing the Exposure
 
-* Activities
-* Services
-* Broadcast Receivers
-
-All can be targeted if exported and insufficiently validated.
+![Exported activity in AndroidManifest.xml](/assets/img/exported-activity-manifest.png)
 
 ---
 
-## Image
+## Attacker Checklist
 
-![AndroidManifest.xml showing android:exported="true"] (/assets/img/exported.png)
+* [ ] Enumerate exported Activities
+* [ ] Trigger components via `adb shell am start`
+* [ ] Inject crafted Intent actions and extras
+* [ ] Observe crashes, bypasses, or hidden flows
 
 ---
 
 ## Key Takeaways
 
-* Always enumerate exported components
-* Intents must never be trusted
-* Attack surface exists by default
+* Activities are not private by default
+* Intents must be treated as untrusted input
+* The attack surface starts at the manifest

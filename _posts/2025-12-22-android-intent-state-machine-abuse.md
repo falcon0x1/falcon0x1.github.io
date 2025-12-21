@@ -106,6 +106,7 @@ adb shell am start -n io.hextree.attacksurface/.activities.Flag4Activity
 ## Image
 
 ![State machine diagram (INIT → PREPARE → BUILD → GET_FLAG)] (/assets/img/intent-state-machine.png)
+
 ```
 ┌─────────┐
 │  INIT   │
