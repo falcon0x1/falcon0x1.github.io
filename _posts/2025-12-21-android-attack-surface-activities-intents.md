@@ -61,7 +61,7 @@ String action = intent.getAction();
 
 ## Visualizing the Exposure
 
-![Exported activity in AndroidManifest.xml](/assets/img/exported-activity-manifest.png)
+![Exported activity in AndroidManifest.xml] (/assets/img/exported-activity-manifest.png)
 
 ---
 
