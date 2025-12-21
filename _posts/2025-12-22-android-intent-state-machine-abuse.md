@@ -4,7 +4,7 @@ date: 2025-12-22 10:00:00 +0200
 categories: [Android, Mobile Security]
 tags: [android, intents, logic-bugs, adb, pentesting]
 toc: true
----------
+---
 
 ## TL;DR
 
