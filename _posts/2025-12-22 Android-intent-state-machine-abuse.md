@@ -1,5 +1,4 @@
 ---
-
 title: "Android Pentesting Notes – Intent Exploitation via State Machines"
 date: 2025-12-22 10:00:00 +0200
 categories: [Android, Mobile Security]

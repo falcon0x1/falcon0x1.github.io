@@ -1,5 +1,4 @@
 ---
-
 title: "Android Pentesting Notes – Weather Apps & API Discovery"
 date: 2025-12-20 10:00:00 +0200
 categories: [Android, Mobile Security]

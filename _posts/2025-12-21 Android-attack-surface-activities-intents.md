@@ -1,5 +1,4 @@
 ---
-
 title: "Android Pentesting Notes – Activities, Intents & Attack Surface"
 date: 2025-12-21 10:00:00 +0200
 categories: [Android, Mobile Security]
