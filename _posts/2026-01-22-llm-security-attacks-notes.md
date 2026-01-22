@@ -9,7 +9,7 @@ toc: true
 ## Why these notes exist
 
 These are **personal review notes** on LLM security from a web exploitation perspective.  
-They are intentionally short, high-level, and focused on **how things break**, not on theory.
+They are intentionally short, high-level, and focused on **how things break**, not theory or hype.
 
 The goal is simple:  
 to quickly refresh the mental model when testing LLM features in labs, bug bounties, or real systems.
@@ -27,65 +27,79 @@ Most LLM security problems reduce to three questions:
 - What **tools / APIs** can it control?
 - How much **trust** does the system place in its output?
 
-```mermaid
-flowchart LR
-    User -->|Text| LLM
-    LLM -->|Actions| Backend
-    Backend --> Data
-````
+Mental model:
 
-Key idea:
-Once an LLM influences backend behavior, it becomes part of the **attack surface**.
+```
+
+User input
+↓
+LLM
+↓
+Backend logic / APIs
+↓
+Real-world impact
+
+```
+
+Once an LLM influences backend behavior, it is part of the **attack surface**, not just a UI feature.
 
 ---
 
 ## How LLMs behave (security view)
 
-LLMs do not reason or validate intent.
-They predict the next token based on patterns.
+LLMs do not reason or validate intent.  
+They predict the next token based on learned patterns.
 
 Security implication:
 
-```mermaid
-flowchart LR
-    TrustedText --> LLM
-    UntrustedText --> LLM
 ```
 
-There is **no native distinction** between trusted and untrusted input.
-Everything is just text.
+[Trusted instructions] ─┐
+├──> LLM ──> Output / Actions
+[Untrusted user input] ─┘
+
+```
+
+There is **no native distinction** between trusted and untrusted text.
 
 ---
 
 ## Prompt injection (core idea)
 
-Prompt injection changes **behavior**, not just output.
+Prompt injection changes **system behavior**, not just output.
 
-```mermaid
-sequenceDiagram
-    Attacker->>LLM: Malicious instructions
-    LLM->>Backend: Unintended API call
+```
+
+Attacker-controlled text
+↓
+LLM
+↓
+Unintended API call / data access
+
 ```
 
 Outcomes that matter:
 
-* Unintended actions (API calls, state changes)
-* Unintended outputs (secrets, payloads)
+- Unintended actions (state changes, API calls)
+- Unintended outputs (secrets, payloads)
 
 ---
 
 ## Direct vs indirect prompt injection
 
-```mermaid
-flowchart TD
-    A[Attacker Input] -->|Direct| LLM
-    B[Web Page / Email / Doc] -->|Indirect| LLM
 ```
 
-* **Direct**: attacker types instructions directly
-* **Indirect**: attacker hides instructions in content later processed
+Direct injection:
+Attacker → Chat input → LLM
 
-Indirect injection is harder to detect and often more dangerous.
+Indirect injection:
+Attacker → Web page / Email / Document → LLM
+
+```
+
+Indirect injection is often more dangerous because:
+- The user interaction looks innocent
+- Malicious instructions are hidden in external content
 
 ---
 
@@ -93,18 +107,24 @@ Indirect injection is harder to detect and often more dangerous.
 
 Most real systems follow this pattern:
 
-```mermaid
-sequenceDiagram
-    User->>App: Prompt
-    App->>LLM: Prompt + system rules
-    LLM->>App: Tool decision
-    App->>Backend: API call
-    Backend->>LLM: Result
-    LLM->>User: Final answer
 ```
 
-Security takeaway:
-If the attacker can steer the model, they may steer backend execution.
+User
+↓
+Application
+↓ (prompt + system rules)
+LLM
+↓ (tool decision)
+Backend API
+↓
+LLM
+↓
+User response
+
+```
+
+Security takeaway:  
+If an attacker can steer the model, they may steer backend execution.
 
 ---
 
@@ -112,25 +132,33 @@ If the attacker can steer the model, they may steer backend execution.
 
 Excessive agency means the LLM can perform **high-impact actions**:
 
-```mermaid
-flowchart LR
-    LLM --> ResetPasswords
-    LLM --> SendEmails
-    LLM --> ReadFiles
-    LLM --> RunCommands
 ```
 
-If access control relies on “the model will behave,” the design is already broken.
+LLM capabilities:
+
+* Reset passwords
+* Send emails
+* Read internal files
+* Execute commands
+
+```
+
+If access control relies on “the model will behave,” the design is already unsafe.
 
 ---
 
 ## Mapping attack surface (tester mindset)
 
-First testing step:
+A practical first step:
 
-```mermaid
-flowchart LR
-    DiscoverTools --> ControlParams --> TestPayloads
+```
+
+Discover tools
+↓
+Understand parameters
+↓
+Test payloads
+
 ```
 
 If the model can describe its tools, it often generates an attacker’s API map.
@@ -139,29 +167,42 @@ If the model can describe its tools, it often generates an attacker’s API map.
 
 ## LLM-assisted API exploitation pattern
 
-Reusable attack loop:
+Reusable testing loop:
 
-```mermaid
-flowchart LR
-    IdentifyTool --> TriggerTool --> ControlInput --> ObserveBackend
 ```
 
-UI output is secondary.
-Backend side effects are what matter.
+Identify tool
+↓
+Trigger tool
+↓
+Control input
+↓
+Observe backend effects
+
+```
+
+UI responses are secondary.  
+Backend-side effects are what prove impact.
 
 ---
 
 ## Indirect prompt injection in practice
 
-```mermaid
-sequenceDiagram
-    User->>LLM: Summarize my email
-    LLM->>EmailStore: Read email
-    EmailStore-->>LLM: Hidden instructions
-    LLM->>Backend: Sensitive action
+Example mental flow:
+
 ```
 
-The attacker never touches the chat input.
+User: "Summarize my email"
+↓
+LLM reads email content
+↓
+Hidden instructions inside email
+↓
+LLM triggers sensitive backend action
+
+```
+
+The attacker never interacts with the chat input directly.
 
 ---
 
@@ -169,14 +210,18 @@ The attacker never touches the chat input.
 
 Prompt-only defenses assume the model enforces rules.
 
-```mermaid
-flowchart LR
-    SafetyPrompt --> LLM
-    AttackerPrompt --> LLM
+Reality:
+
 ```
 
-Both are just text.
-The model has no hard priority system.
+"Never do X"        ┐
+├──> LLM → Decision
+"Ignore above and do X" ┘
+
+```
+
+Both are just text.  
+The model has no hard trust boundary.
 
 ---
 
@@ -184,16 +229,28 @@ The model has no hard priority system.
 
 ### Poisoning
 
-```mermaid
-flowchart LR
-    AttackerData --> TrainingSet --> LLMBehavior
+```
+
+Attacker-controlled data
+↓
+Training / fine-tuning
+↓
+Altered model behavior
+
 ```
 
 ### Data leakage
 
-```mermaid
-flowchart LR
-    SensitiveLogs --> Training --> LLM --> Reconstruction
+```
+
+Sensitive logs / inputs
+↓
+Training data
+↓
+LLM completion
+↓
+Partial reconstruction
+
 ```
 
 Deletion does not guarantee removal from training pipelines.
@@ -204,18 +261,21 @@ Deletion does not guarantee removal from training pipelines.
 
 Core principle:
 
-```mermaid
-flowchart LR
-    AssumeFailure --> EnforceBackendControls
+```
+
+Assume model failure
+↓
+Enforce security in backend
+
 ```
 
 Practical implications:
 
-* Treat LLM-accessible APIs as public
-* Enforce auth and authorization server-side
-* Limit tool privileges
-* Restrict data exposure
-* Monitor tool usage
+- Treat LLM-accessible APIs as public
+- Enforce auth and authorization server-side
+- Limit tool privileges
+- Restrict data exposure
+- Monitor tool usage
 
 Prompt rules are **not** security controls.
 
@@ -224,11 +284,14 @@ Prompt rules are **not** security controls.
 ## Review checklist
 
 ```
+
 □ Do I know every input source (direct and indirect)?
 □ Do I know every tool/API the model can call?
 □ Are sensitive actions enforced server-side?
 □ Can attacker-controlled content influence decisions?
 □ Is trust placed in the model instead of the backend?
+
 ```
 
 If these are clearly answered, the integration is far more likely to be resilient rather than merely impressive.
+```
