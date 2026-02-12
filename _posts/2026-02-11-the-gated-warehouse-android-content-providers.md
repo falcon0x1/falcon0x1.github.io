@@ -1,6 +1,6 @@
 ---
 title: "The Gated Warehouse: A Pentester's Guide to Android Content Providers"
-date: 2026-02-12 15:00:00 +0200
+date: 2026-02-11 15:00:00 +0200
 categories: [Mobile Security, Research]
 tags: [android, content-provider, exploitation, pentesting]
 toc: true
