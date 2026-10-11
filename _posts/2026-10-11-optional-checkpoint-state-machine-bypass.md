@@ -45,6 +45,9 @@ That's it. The job is now "done", the customer is billed, the payout fires — a
 
 In a field-service / delivery / fuel / inspection context, that's a corrupt operator's dream: mark jobs complete, collect, and leave zero evidence of what was (or wasn't) actually delivered. Disputes become un-investigatable because there's nothing to investigate with.
 
+![State-machine bypass: the attacker skips the verification checkpoint]({{ '/assets/img/state-machine-bypass.png' | relative_url }})
+_Intended flow: start → verify → complete. The server never checks the order, so calling `/complete` straight after `/start` finalizes the job with the proof step skipped._
+
 ---
 
 ## Why testers miss it (and how I nearly did)
