@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="State-machine bypass: an attacker calls /complete directly, skipping the photo-verification checkpoint">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <!-- canvas + card -->
+  <rect width="1200" height="630" fill="#f8fafc"/>
+  <rect x="16" y="16" width="1168" height="598" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- CWE badge -->
+  <rect x="1032" y="40" width="116" height="36" rx="18" fill="#fef2f2" stroke="#fecaca" stroke-width="1.5"/>
+  <text x="1090" y="63" text-anchor="middle" font-size="15" font-weight="700" fill="#b91c1c">CWE-840</text>
+
+  <!-- title -->
+  <text x="56" y="76" font-size="34" font-weight="800" fill="#0f172a">State-machine bypass: skipping the checkpoint</text>
+  <text x="56" y="114" font-size="19.5" fill="#64748b">The app enforces the order. The server doesn't.</text>
+
+  <!-- attack labels: placed ABOVE the arc peak so nothing strikes through them -->
+  <text x="600" y="152" text-anchor="middle" font-size="22" font-weight="700" fill="#dc2626" stroke="#ffffff" stroke-width="6" paint-order="stroke">attacker calls /complete directly</text>
+  <text x="600" y="180" text-anchor="middle" font-size="16.5" fill="#b91c1c" stroke="#ffffff" stroke-width="5" paint-order="stroke">checkpoint skipped — order finalizes with no proof attached</text>
+
+  <!-- attack path: lands vertically on top of Completed -->
+  <path d="M 184,386 C 184,150 1016,150 1016,386" fill="none" stroke="#dc2626" stroke-width="3" stroke-dasharray="10 7" marker-end="url(#arrowRed)"/>
+
+  <!-- intended arrows -->
+  <line x1="309" y1="438" x2="468" y2="438" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="390" y="426" text-anchor="middle" font-size="15" font-weight="600" fill="#475569">/photos</text>
+  <line x1="730" y1="438" x2="889" y2="438" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="810" y="426" text-anchor="middle" font-size="15" font-weight="600" fill="#475569">/complete</text>
+
+  <!-- Started -->
+  <rect x="59" y="390" width="250" height="96" rx="14" fill="#eef2ff" stroke="#6366f1" stroke-width="2.5"/>
+  <text x="184" y="414" text-anchor="middle" font-size="11.5" font-weight="700" letter-spacing="1.5" fill="#4f46e5">STEP 1</text>
+  <text x="184" y="443" text-anchor="middle" font-size="25" font-weight="700" fill="#1e293b">Started</text>
+  <text x="184" y="468" text-anchor="middle" font-size="14" fill="#475569">after PATCH /start</text>
+
+  <!-- Verified (the checkpoint) -->
+  <rect x="470" y="390" width="260" height="96" rx="14" fill="#fff7ed" stroke="#f59e0b" stroke-width="3"/>
+  <text x="600" y="414" text-anchor="middle" font-size="11.5" font-weight="700" letter-spacing="1.5" fill="#b45309">STEP 2</text>
+  <text x="600" y="443" text-anchor="middle" font-size="25" font-weight="700" fill="#1e293b">Verified</text>
+  <text x="600" y="468" text-anchor="middle" font-size="14" fill="#b45309">PATCH /photos — the proof step</text>
+
+  <!-- SKIPPED badge straddling the checkpoint -->
+  <rect x="540" y="376" width="120" height="28" rx="14" fill="#dc2626" stroke="#ffffff" stroke-width="3"/>
+  <text x="600" y="395" text-anchor="middle" font-size="14" font-weight="800" letter-spacing="2" fill="#ffffff">SKIPPED</text>
+
+  <!-- Completed -->
+  <rect x="891" y="390" width="250" height="96" rx="14" fill="#ecfdf5" stroke="#10b981" stroke-width="2.5"/>
+  <text x="1016" y="414" text-anchor="middle" font-size="11.5" font-weight="700" letter-spacing="1.5" fill="#047857">STEP 3</text>
+  <text x="1016" y="443" text-anchor="middle" font-size="25" font-weight="700" fill="#1e293b">Completed</text>
+  <text x="1016" y="468" text-anchor="middle" font-size="14" fill="#047857">payout fires</text>
+
+  <!-- callout -->
+  <text x="600" y="530" text-anchor="middle" font-size="15.5" fill="#b45309">the evidence step the server forgot to require</text>
+
+  <!-- legend -->
+  <line x1="427" y1="582" x2="467" y2="582" stroke="#475569" stroke-width="3"/>
+  <text x="477" y="587" font-size="14.5" fill="#475569">intended path</text>
+  <line x1="640" y1="582" x2="680" y2="582" stroke="#dc2626" stroke-width="3" stroke-dasharray="10 7"/>
+  <text x="690" y="587" font-size="14.5" fill="#dc2626">attacker path</text>
+</svg>
