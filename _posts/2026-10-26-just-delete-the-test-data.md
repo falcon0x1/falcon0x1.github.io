@@ -1,6 +1,6 @@
 ---
 title: "Just Delete the Test Data (The Most Dangerous Easy Task)"
-date: 2026-10-26 10:00:00 +0200
+date: 2026-10-26 09:00:00 +0300
 categories: [Cloud Security, Storage]
 tags: [firebase, gcs, cloud-storage, data-cleanup, bucket-security, pentest-ops]
 toc: true
